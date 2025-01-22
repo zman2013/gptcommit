@@ -153,7 +153,7 @@ Refs: #123
         Git Diff:
         {diff}
 
-请直接返回 commit message，不要返回任何其他内容。
+请直接返回 commit message，不要使用 ``` 包围，不要返回任何其他内容。
         """
 
         response = client.chat.completions.create(
