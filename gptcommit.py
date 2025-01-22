@@ -19,6 +19,15 @@ class GPTCommit:
         if not os.path.exists(self.config_dir):
             os.makedirs(self.config_dir)
 
+    def get_keychain_api_key(self):
+        """从 macOS Keychain 获取 API key"""
+        try:
+            cmd = ['security', 'find-generic-password', '-s', 'deepseek-key', '-w']
+            api_key = subprocess.check_output(cmd, encoding='utf-8').strip()
+            return api_key if api_key else None
+        except subprocess.CalledProcessError:
+            return None
+
     def get_cached_api_key(self):
         """从缓存中获取API key"""
         if not os.path.exists(self.cache_file):
@@ -45,16 +54,15 @@ class GPTCommit:
             json.dump(cache_data, f)
 
     def get_api_key(self):
-        """获取API key，优先从缓存中获取，其次从环境变量获取，最后从git配置获取"""
-        # 先从缓存获取
-        api_key = self.get_cached_api_key()
+        """获取API key，按优先级：Keychain > 环境变量 > git配置"""
+        # 从 Keychain 获取
+        api_key = self.get_keychain_api_key()
         if api_key:
             return api_key
 
         # 从环境变量获取
         api_key = os.environ.get('DEEPSEEK_API_KEY')
         if api_key:
-            self.cache_api_key(api_key)
             return api_key
 
         # 从git配置获取
@@ -64,15 +72,15 @@ class GPTCommit:
                 encoding='utf-8'
             ).strip()
             if api_key:
-                self.cache_api_key(api_key)
                 return api_key
         except subprocess.CalledProcessError:
             pass
 
         print("错误: 未找到 DeepSeek API Key")
         print("请通过以下方式之一设置 API Key:")
-        print("1. 设置环境变量: export DEEPSEEK_API_KEY='your-api-key'")
-        print("2. 设置git配置: git config gptcommit.apikey 'your-api-key'")
+        print("1. 设置 macOS Keychain: security add-generic-password -s deepseek-key -w 'your-api-key'")
+        print("2. 设置环境变量: export DEEPSEEK_API_KEY='your-api-key'")
+        print("3. 设置git配置: git config gptcommit.apikey 'your-api-key'")
         sys.exit(1)
 
     def get_git_diff(self):
@@ -111,7 +119,7 @@ feat: a commit of the type feat introduces a new feature to the codebase (this c
 BREAKING CHANGE: a commit that has a footer BREAKING CHANGE:, or appends a ! after the type/scope, introduces a breaking API change (correlating with MAJOR in Semantic Versioning). A BREAKING CHANGE can be part of commits of any type.
 types other than fix: and feat: are allowed, for example @commitlint/config-conventional (based on the Angular convention) recommends build:, chore:, ci:, docs:, style:, refactor:, perf:, test:, and others.
 footers other than BREAKING CHANGE: <description> may be provided and follow a convention similar to git trailer format.
-Additional types are not mandated by the Conventional Commits specification, and have no implicit effect in Semantic Versioning (unless they include a BREAKING CHANGE). A scope may be provided to a commit’s type, to provide additional contextual information and is contained within parenthesis, e.g., feat(parser): add ability to parse arrays.
+Additional types are not mandated by the Conventional Commits specification, and have no implicit effect in Semantic Versioning (unless they include a BREAKING CHANGE). A scope may be provided to a commit's type, to provide additional contextual information and is contained within parenthesis, e.g., feat(parser): add ability to parse arrays.
 
 Examples
 Commit message with description and breaking change footer
