@@ -5,12 +5,27 @@ mkdir -p ~/.local/bin
 cp gptcommit.py ~/.local/bin/gptcommit
 chmod +x ~/.local/bin/gptcommit
 
-# 添加~/.local/bin到PATH（如果还没有）
-if [[ ":$PATH:" != *":$HOME/.local/bin:"* ]]; then
+# 添加~/.local/bin到PATH
+# 为 bash 添加 PATH
+if [ -f ~/.bashrc ]; then
     echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-    echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
-    export PATH="$HOME/.local/bin:$PATH"
 fi
+
+# 为 zsh 添加 PATH
+if [ -f ~/.zshrc ]; then
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc
+fi
+
+# 为 fish 添加配置
+if [ -f ~/.config/fish/config.fish ]; then
+    echo -e "\n# GPTCommit PATH configuration" >> ~/.config/fish/config.fish
+    echo 'if test -d ~/.local/bin' >> ~/.config/fish/config.fish
+    echo '    fish_add_path ~/.local/bin' >> ~/.config/fish/config.fish
+    echo 'end' >> ~/.config/fish/config.fish
+fi
+
+# 立即更新当前会话的 PATH
+export PATH="$HOME/.local/bin:$PATH"
 
 echo "GPTCommit已安装完成！"
 echo -e "\n首先需要设置 DeepSeek API Key，可以选择以下任一方式："
@@ -26,3 +41,9 @@ echo "1. 自动生成提交消息："
 echo "   gptcommit"
 echo "2. 使用指定的提交消息："
 echo "   gptcommit \"your commit message\""
+
+# 提示用户重新加载 shell 配置
+echo -e "\n请运行以下命令之一来使PATH更改生效："
+echo "- Bash: source ~/.bashrc"
+echo "- Zsh:  source ~/.zshrc"
+echo "- Fish: exec fish"
