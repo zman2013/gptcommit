@@ -41,6 +41,8 @@ echo "1. 自动生成提交消息："
 echo "   gptcommit"
 echo "2. 使用指定的提交消息："
 echo "   gptcommit \"your commit message\""
+echo "3. 制定语言："
+echo "   gptcommit -l en"
 
 # 提示用户重新加载 shell 配置
 echo -e "\n请运行以下命令之一来使PATH更改生效："

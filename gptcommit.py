@@ -2,14 +2,16 @@
 import os
 import sys
 import subprocess
+import argparse
 from pathlib import Path
 from openai import OpenAI
 
 class GPTCommit:
-    def __init__(self):
+    def __init__(self, lang='zh'):
         self.config_dir = os.path.expanduser("~/.config/gptcommit")
         if not os.path.exists(self.config_dir):
             os.makedirs(self.config_dir)
+        self.lang = lang
 
     def get_keychain_api_key(self):
         """从 macOS Keychain 获取 API key"""
@@ -66,13 +68,28 @@ class GPTCommit:
             base_url="https://api.deepseek.com"
         )
 
-        prompt = f"""作为一个Git提交消息生成助手，请根据以下git diff生成一个符合 Conventional Commits 的中文 commit message: type 和 scope 为英文，description 和 body 和 footer 为中文。
+        if self.lang == 'zh':
+            prompt = f"""作为一个Git提交消息生成助手，请根据以下git diff生成一个符合 Conventional Commits 的中文 commit message:
+            - type 和 scope 使用英文
+            - description、body 和 footer 使用中文
+            - 保持简洁明了
 
-        Git Diff:
-        {diff}
+            Git Diff:
+            {diff}
 
 请直接返回 commit message，不要使用 ``` 包围，不要返回任何其他内容。
-        """
+            """
+        else:
+            prompt = f"""As a Git commit message generator, please generate a commit message following the Conventional Commits standard based on the following git diff:
+            - Keep the message concise and clear
+            - Follow the format: <type>[optional scope]: <description>
+            - Add body and footer if necessary
+
+            Git Diff:
+            {diff}
+
+Please return only the commit message, without any ``` or additional content.
+            """
 
         response = client.chat.completions.create(
             model="deepseek-chat",
@@ -112,20 +129,20 @@ class GPTCommit:
                 sys.exit(0)
 
 def main():
-    if len(sys.argv) > 2:
-        print("Usage: gptcommit [commit message]")
-        sys.exit(1)
+    parser = argparse.ArgumentParser(description='GPTCommit - AI-powered Git commit message generator')
+    parser.add_argument('message', nargs='?', help='Optional commit message')
+    parser.add_argument('-l', '--lang', choices=['zh', 'en'], default='zh',
+                      help='Language for commit message (zh: Chinese, en: English)')
+
+    args = parser.parse_args()
 
     # 检查当前目录是否是git仓库
     if not os.path.isdir('.git'):
         print("错误: 当前目录不是git仓库")
         sys.exit(1)
 
-    gpt_commit = GPTCommit()
-
-    # 如果提供了提交消息，直接使用
-    message = sys.argv[1] if len(sys.argv) == 2 else None
-    gpt_commit.commit(message)
+    gpt_commit = GPTCommit(lang=args.lang)
+    gpt_commit.commit(args.message)
 
 if __name__ == "__main__":
     main()
