@@ -54,10 +54,26 @@ chmod +x install.sh
 
 ## 使用方法
 
-### 在仓库中启用 GPTCommit
+### 在仓库中启用/禁用 GPTCommit
+
 ```bash
-# 在你的 Git 仓库中启用 GPTCommit
+# 启用 GPTCommit（会自动安装钩子）
+gptcommit enable
+
+# 禁用 GPTCommit（会移除钩子）
+gptcommit disable
+```
+
+或者手动配置：
+```bash
+# 启用
 git config gptcommit.enabled true
+cp ~/.git-templates/hooks/prepare-commit-msg .git/hooks/
+chmod +x .git/hooks/prepare-commit-msg
+
+# 禁用
+git config gptcommit.enabled false
+rm .git/hooks/prepare-commit-msg
 ```
 
 ### 日常使用
@@ -75,13 +91,6 @@ git commit
 ```
 
 GPTCommit 会自动生成一个符合 Conventional Commits 规范的提交消息。如果你对生成的消息不满意，可以在提交之前编辑它。
-
-### 禁用 GPTCommit
-
-如果你想在某个仓库中禁用 GPTCommit：
-```bash
-git config gptcommit.enabled false
-```
 
 ## 提交消息格式
 

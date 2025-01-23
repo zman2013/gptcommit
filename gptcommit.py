@@ -178,9 +178,74 @@ Refs: #123
         except subprocess.CalledProcessError:
             return False
 
+def enable_gptcommit():
+    """启用 GPTCommit"""
+    try:
+        # 检查当前目录是否是 git 仓库
+        if not os.path.isdir('.git'):
+            print("错误: 当前目录不是 git 仓库")
+            sys.exit(1)
+
+        # 启用 GPTCommit
+        subprocess.run(['git', 'config', 'gptcommit.enabled', 'true'], check=True)
+
+        # 确保 hooks 目录存在
+        hooks_dir = Path('.git/hooks')
+        hooks_dir.mkdir(exist_ok=True)
+
+        # 复制 prepare-commit-msg 钩子
+        template_hook = Path('~/.git-templates/hooks/prepare-commit-msg').expanduser()
+        if not template_hook.exists():
+            print("错误: 钩子模板文件不存在，请先运行安装脚本")
+            sys.exit(1)
+
+        target_hook = hooks_dir / 'prepare-commit-msg'
+        subprocess.run(['cp', str(template_hook), str(target_hook)], check=True)
+        subprocess.run(['chmod', '+x', str(target_hook)], check=True)
+
+        print("GPTCommit 已成功启用")
+        print("- 已设置 gptcommit.enabled=true")
+        print("- 已安装 prepare-commit-msg 钩子")
+
+    except subprocess.CalledProcessError as e:
+        print(f"错误: 启用 GPTCommit 失败: {e}")
+        sys.exit(1)
+
+def disable_gptcommit():
+    """禁用 GPTCommit"""
+    try:
+        # 检查当前目录是否是 git 仓库
+        if not os.path.isdir('.git'):
+            print("错误: 当前目录不是 git 仓库")
+            sys.exit(1)
+
+        # 禁用 GPTCommit
+        subprocess.run(['git', 'config', 'gptcommit.enabled', 'false'], check=True)
+
+        # 移除 prepare-commit-msg 钩子
+        hook_path = Path('.git/hooks/prepare-commit-msg')
+        if hook_path.exists():
+            hook_path.unlink()
+            print("- 已移除 prepare-commit-msg 钩子")
+
+        print("GPTCommit 已成功禁用")
+        print("- 已设置 gptcommit.enabled=false")
+
+    except subprocess.CalledProcessError as e:
+        print(f"错误: 禁用 GPTCommit 失败: {e}")
+        sys.exit(1)
+
 def main():
-    if len(sys.argv) != 2:
-        print("Usage: gptcommit.py <commit-msg-file>")
+    if len(sys.argv) == 2 and sys.argv[1] == 'enable':
+        enable_gptcommit()
+        return
+    elif len(sys.argv) == 2 and sys.argv[1] == 'disable':
+        disable_gptcommit()
+        return
+    elif len(sys.argv) != 2:
+        print("Usage: gptcommit <commit-msg-file>")
+        print("   or: gptcommit enable")
+        print("   or: gptcommit disable")
         sys.exit(1)
 
     commit_msg_file = sys.argv[1]

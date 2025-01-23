@@ -29,28 +29,21 @@ git config --global init.templateDir ~/.git-templates
 
 echo "GPTCommit已安装完成！"
 echo -e "\n首先需要设置 DeepSeek API Key，可以选择以下任一方式："
-echo "1. 设置环境变量（推荐）："
+echo "1. 设置 macOS Keychain（最安全，推荐）："
+echo "   security add-generic-password -s deepseek-key -w 'your-api-key'"
+echo "2. 设置环境变量："
 echo "   export DEEPSEEK_API_KEY='your-api-key'"
-echo "2. 设置git配置："
+echo "3. 设置git配置："
 echo "   git config --global gptcommit.apikey 'your-api-key'"
 
-echo -e "\n要在现有的git仓库中启用GPTCommit，请按以下步骤操作："
-echo "1. 运行以下命令启用GPTCommit："
-echo "   git config gptcommit.enabled true"
-echo "2. 复制钩子到当前仓库："
-echo "   cp ~/.git-templates/hooks/prepare-commit-msg .git/hooks/"
-echo "   chmod +x .git/hooks/prepare-commit-msg"
+echo -e "\n要在git仓库中启用GPTCommit，只需运行："
+echo "   gptcommit enable"
 
-# 验证钩子是否生效
-echo -e "\n验证钩子是否生效:"
-echo "1. 在git仓库中运行 'ls -la .git/hooks' 检查prepare-commit-msg钩子是否存在"
-echo "2. 确认钩子文件有执行权限(应显示-rwxr-xr-x)"
-echo "3. 尝试进行一次git commit，如果看到生成的commit message则说明钩子生效"
+echo -e "\n要禁用GPTCommit，运行："
+echo "   gptcommit disable"
 
-# 如果当前目录是git仓库，自动安装钩子
+# 如果当前目录是git仓库，提示用户是否要启用
 if [ -d ".git" ]; then
-    echo -e "\n检测到当前目录是git仓库，正在自动安装钩子..."
-    cp ~/.git-templates/hooks/prepare-commit-msg .git/hooks/
-    chmod +x .git/hooks/prepare-commit-msg
-    echo "钩子已安装到当前仓库"
+    echo -e "\n检测到当前目录是git仓库，你可以运行以下命令启用GPTCommit："
+    echo "   gptcommit enable"
 fi
