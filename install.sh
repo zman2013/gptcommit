@@ -18,7 +18,7 @@ fi
 
 # 为 fish 添加配置
 if [ -f ~/.config/fish/config.fish ]; then
-    echo -e "\n# GPTCommit PATH configuration" >> ~/.config/fish/config.fish
+    echo "\n# GPTCommit PATH configuration" >> ~/.config/fish/config.fish
     echo 'if test -d ~/.local/bin' >> ~/.config/fish/config.fish
     echo '    fish_add_path ~/.local/bin' >> ~/.config/fish/config.fish
     echo 'end' >> ~/.config/fish/config.fish

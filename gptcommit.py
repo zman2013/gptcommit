@@ -4,7 +4,7 @@ import sys
 import subprocess
 import argparse
 from pathlib import Path
-from openai import OpenAI
+import requests
 
 class GPTCommit:
     def __init__(self, lang='zh'):
@@ -16,7 +16,7 @@ class GPTCommit:
     def get_keychain_api_key(self):
         """从 macOS Keychain 获取 API key"""
         try:
-            cmd = ['security', 'find-generic-password', '-s', 'deepseek-key', '-w']
+            cmd = ['security', 'find-generic-password', '-s', 'deepseek-siliconflow-key', '-w']
             api_key = subprocess.check_output(cmd, encoding='utf-8').strip()
             return api_key if api_key else None
         except subprocess.CalledProcessError:
@@ -63,44 +63,65 @@ class GPTCommit:
 
     def generate_commit_message(self, diff):
         """使用LLM生成提交信息"""
-        client = OpenAI(
-            api_key=self.get_api_key(),
-            base_url="https://api.deepseek.com"
-        )
+        try:
+            api_key = self.get_api_key()
+            url = "https://api.siliconflow.cn/v1/chat/completions"
 
-        if self.lang == 'zh':
-            prompt = f"""作为一个Git提交消息生成助手，请根据以下git diff生成一个符合 Conventional Commits 的中文 commit message:
-            - type 和 scope 使用英文
-            - description、body 和 footer 使用中文
-            - 保持简洁明了
+            if self.lang == 'zh':
+                prompt = f"""作为一个Git提交消息生成助手，请根据以下git diff生成一个符合 Conventional Commits 的中文 commit message:
+                - type 和 scope 使用英文
+                - description、body 和 footer 使用中文
+                - 保持简洁明了
 
-            Git Diff:
-            {diff}
+                Git Diff:
+                {diff}
 
 请直接返回 commit message，不要使用 ``` 包围，不要返回任何其他内容。
-            """
-        else:
-            prompt = f"""As a Git commit message generator, please generate a commit message following the Conventional Commits standard based on the following git diff:
-            - Keep the message concise and clear
-            - Follow the format: <type>[optional scope]: <description>
-            - Add body and footer if necessary
+                """
+            else:
+                prompt = f"""As a Git commit message generator, please generate a commit message following the Conventional Commits standard based on the following git diff:
+                - Keep the message concise and clear
+                - Follow the format: <type>[optional scope]: <description>
+                - Add body and footer if necessary
 
-            Git Diff:
-            {diff}
+                Git Diff:
+                {diff}
 
 Please return only the commit message, without any ``` or additional content.
-            """
+                """
 
-        response = client.chat.completions.create(
-            model="deepseek-chat",
-            messages=[
-                {"role": "system", "content": "你是一个专业的Git提交消息生成助手，严格遵循 commit convention"},
-                {"role": "user", "content": prompt}
-            ],
-            stream=False
-        )
+            payload = {
+                "model": "Pro/deepseek-ai/DeepSeek-R1",
+                "messages": [
+                    {"role": "system", "content": "你是一个专业的Git提交消息生成助手，严格遵循 commit convention"},
+                    {"role": "user", "content": prompt}
+                ],
+                "stream": False,
+                "max_tokens": 512,
+                "temperature": 0.7,
+                "top_p": 0.7,
+                "response_format": {"type": "text"}
+            }
 
-        return response.choices[0].message.content
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json"
+            }
+
+            try:
+                response = requests.post(url, json=payload, headers=headers)
+                response.raise_for_status()  # Raise an exception for bad status codes
+                return response.json()['choices'][0]['message']['content']
+            except Exception as e:
+                print(f"API调用错误: {str(e)}")
+                if hasattr(e, 'response'):
+                    print(f"响应状态码: {e.response.status_code}")
+                    print(f"响应内容: {e.response.text}")
+                raise
+
+        except Exception as e:
+            print(f"生成提交消息时发生错误: {str(e)}")
+            sys.exit(1)
 
     def commit(self, message=None):
         """执行git commit"""

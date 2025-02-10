@@ -17,7 +17,7 @@ GPTCommit 是一个智能的 Git 提交消息生成工具，它使用 LLM (Large
 方式1: macOS Keychain（最安全，推荐）
 ```bash
 # 添加 API Key 到 Keychain
-security add-generic-password -s deepseek-key -w 'your-api-key'
+security add-generic-password -a deepseek-key -s deepseek-key -w 'your-api-key'
 
 # 验证是否添加成功
 security find-generic-password -s deepseek-key -w
